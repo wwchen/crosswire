@@ -13,6 +13,11 @@ axios.interceptors.response.use(response => {
   return response
 })
 
+/// ==============================================================================================================
+
+function flatten<T>(arr: Array<Array<T>>): Array<T> {
+  return arr.reduce((acc, v) => acc.concat(v), Array<T>())
+}
 
 /// ==============================================================================================================
 
@@ -60,7 +65,7 @@ interface MapAction {
 interface MegaverseApi {
   getMap(): Promise<MegaverseMap>
   getMapGoal(): Promise<MegaverseMap>
-  set(action: MapAction): Promise<void>
+  makeAction(action: MapAction): Promise<void>
 }
 
 /// ===============================================================================
@@ -76,7 +81,7 @@ class MegaverseLocalApi implements MegaverseApi {
     const rawState: Array<Array<string>> = [["SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE"], ["SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "RIGHT_COMETH", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE"], ["SPACE", "SPACE", "POLYANET", "POLYANET", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "UP_COMETH", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "POLYANET", "POLYANET", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE"], ["SPACE", "SPACE", "POLYANET", "SPACE", "POLYANET", "POLYANET", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "WHITE_SOLOON", "POLYANET", "POLYANET", "SPACE", "POLYANET", "SPACE", "SPACE", "LEFT_COMETH", "SPACE", "SPACE"], ["SPACE", "SPACE", "SPACE", "POLYANET", "SPACE", "BLUE_SOLOON", "POLYANET", "POLYANET", "PURPLE_SOLOON", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "LEFT_COMETH", "SPACE", "SPACE", "POLYANET", "POLYANET", "SPACE", "SPACE", "POLYANET", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "RIGHT_COMETH"], ["SPACE", "SPACE", "SPACE", "POLYANET", "SPACE", "SPACE", "WHITE_SOLOON", "SPACE", "POLYANET", "POLYANET", "SPACE", "SPACE", "DOWN_COMETH", "SPACE", "SPACE", "SPACE", "SPACE", "POLYANET", "POLYANET", "BLUE_SOLOON", "SPACE", "SPACE", "SPACE", "POLYANET", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE"], ["SPACE", "SPACE", "SPACE", "SPACE", "POLYANET", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "POLYANET", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "POLYANET", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "POLYANET", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE"], ["SPACE", "SPACE", "SPACE", "SPACE", "POLYANET", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "POLYANET", "SPACE", "SPACE", "SPACE", "SPACE", "RED_SOLOON", "POLYANET", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "POLYANET", "PURPLE_SOLOON", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE"], ["SPACE", "SPACE", "SPACE", "SPACE", "WHITE_SOLOON", "POLYANET", "SPACE", "SPACE", "SPACE", "SPACE", "BLUE_SOLOON", "POLYANET", "SPACE", "SPACE", "SPACE", "POLYANET", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "POLYANET", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE"], ["SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "POLYANET", "PURPLE_SOLOON", "SPACE", "SPACE", "SPACE", "SPACE", "POLYANET", "RED_SOLOON", "SPACE", "SPACE", "POLYANET", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "POLYANET", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "UP_COMETH", "SPACE", "SPACE"], ["SPACE", "SPACE", "UP_COMETH", "SPACE", "SPACE", "SPACE", "POLYANET", "POLYANET", "SPACE", "SPACE", "SPACE", "SPACE", "POLYANET", "SPACE", "POLYANET", "SPACE", "SPACE", "SPACE", "PURPLE_SOLOON", "POLYANET", "POLYANET", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE"], ["SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "BLUE_SOLOON", "POLYANET", "POLYANET", "SPACE", "SPACE", "POLYANET", "SPACE", "POLYANET", "SPACE", "SPACE", "POLYANET", "POLYANET", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE"], ["SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "POLYANET", "POLYANET", "SPACE", "POLYANET", "SPACE", "POLYANET", "POLYANET", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "LEFT_COMETH", "SPACE", "SPACE", "DOWN_COMETH", "SPACE"], ["SPACE", "SPACE", "SPACE", "SPACE", "RIGHT_COMETH", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "POLYANET", "POLYANET", "POLYANET", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE"], ["SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "WHITE_SOLOON", "POLYANET", "POLYANET", "SPACE", "POLYANET", "SPACE", "POLYANET", "POLYANET", "BLUE_SOLOON", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE"], ["SPACE", "LEFT_COMETH", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "POLYANET", "POLYANET", "SPACE", "SPACE", "POLYANET", "SPACE", "POLYANET", "SPACE", "SPACE", "POLYANET", "POLYANET", "WHITE_SOLOON", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "RIGHT_COMETH", "SPACE", "SPACE", "SPACE"], ["SPACE", "SPACE", "SPACE", "DOWN_COMETH", "SPACE", "SPACE", "POLYANET", "POLYANET", "BLUE_SOLOON", "SPACE", "SPACE", "SPACE", "POLYANET", "SPACE", "POLYANET", "SPACE", "SPACE", "SPACE", "SPACE", "POLYANET", "POLYANET", "BLUE_SOLOON", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE"], ["SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "POLYANET", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "POLYANET", "SPACE", "SPACE", "PURPLE_SOLOON", "POLYANET", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "POLYANET", "SPACE", "SPACE", "UP_COMETH", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE"], ["SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "POLYANET", "PURPLE_SOLOON", "SPACE", "SPACE", "SPACE", "SPACE", "POLYANET", "SPACE", "SPACE", "SPACE", "POLYANET", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "POLYANET", "RED_SOLOON", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE"], ["SPACE", "SPACE", "SPACE", "SPACE", "POLYANET", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "POLYANET", "WHITE_SOLOON", "SPACE", "SPACE", "SPACE", "SPACE", "POLYANET", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "POLYANET", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE"], ["RIGHT_COMETH", "SPACE", "SPACE", "SPACE", "POLYANET", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "POLYANET", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "POLYANET", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "POLYANET", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE"], ["SPACE", "SPACE", "SPACE", "POLYANET", "SPACE", "SPACE", "SPACE", "SPACE", "POLYANET", "POLYANET", "RED_SOLOON", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "WHITE_SOLOON", "POLYANET", "POLYANET", "PURPLE_SOLOON", "SPACE", "SPACE", "SPACE", "POLYANET", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE"], ["SPACE", "SPACE", "SPACE", "POLYANET", "SPACE", "RED_SOLOON", "POLYANET", "POLYANET", "BLUE_SOLOON", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "LEFT_COMETH", "SPACE", "SPACE", "SPACE", "SPACE", "POLYANET", "POLYANET", "SPACE", "SPACE", "POLYANET", "RED_SOLOON", "SPACE", "SPACE", "DOWN_COMETH", "SPACE", "SPACE"], ["SPACE", "SPACE", "POLYANET", "SPACE", "POLYANET", "POLYANET", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "POLYANET", "POLYANET", "SPACE", "POLYANET", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE"], ["SPACE", "SPACE", "POLYANET", "POLYANET", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "UP_COMETH", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "POLYANET", "POLYANET", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE"], ["SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE"], ["SPACE", "SPACE", "SPACE", "DOWN_COMETH", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "DOWN_COMETH", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "UP_COMETH", "SPACE", "SPACE", "SPACE"], ["SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "LEFT_COMETH", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE"], ["SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "RIGHT_COMETH", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "LEFT_COMETH", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE"], ["SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE"]]
     return Promise.resolve(MegaverseMap.fromRaw(rawState))
   }
-  set(action: MapAction): Promise<void> {
+  makeAction(action: MapAction): Promise<void> {
     const obj = action.object
     const attr = obj.attributeKey ? `(${obj.attributeKey}=${obj.attribute})` : ""
     console.log(`${action.actionType} (${obj.row}, ${obj.col}) to ${obj.type} ${attr}`)
@@ -145,7 +150,7 @@ class MegaverseRestApi extends RestApiConfig implements MegaverseApi {
     const rawState = response.data.goal
     return MegaverseMap.fromRaw(rawState)
   }
-  async set(action: MapAction): Promise<void> {
+  async makeAction(action: MapAction): Promise<void> {
     const obj = action.object
     if (!obj.type) { return Promise.resolve() }
     const endpoint = this.astralObjectEndpoint(obj.type)
@@ -170,50 +175,14 @@ class MegaverseRestApi extends RestApiConfig implements MegaverseApi {
 /// ==============================================================================================================
 
 class MegaverseMap {
-  rows: number
-  cols: number
-  length: number
-  _map: Array<Array<AstralObject>>
-  constructor(objects: Array<Array<AstralObject>>) {
-    this.rows = objects.length
-    this.cols = objects[0].length
-    this.length = this.rows * this.cols
-    this._map = objects // todo flatten it
+  map: Array<AstralObject>
+  constructor(objects: Array<AstralObject>) {
+    this.map = objects // todo flatten it
   }
 
   static fromRaw(raw: Array<Array<string | null>>): MegaverseMap {
     const objects = raw.map((r, ri) => r.map((c, ci) => new AstralObject(c, ri, ci)))
-    return new MegaverseMap(objects)
-  }
-
-  get(row: number, col: number): AstralObject { return this._map[row][col] }
-
-  *iterator(): Generator<AstralObject> {
-    for (const row of this._map) {
-      for (const cell of row) {
-        yield cell
-      }
-    }
-  }
-
-  map<T>(f: (o: AstralObject, row: number, col: number) => T): Array<T> {
-    const i = this.iterator()
-    let curr = i.next()
-    let count = 0
-    const collection = Array<T>()
-    while (!curr.done) {
-      const row = ~~(count / this.cols)
-      const col = count % this.cols
-      const result = f(curr.value, row, col)
-      collection.push(result)
-      count += 1
-      curr = i.next()
-    }
-    return collection
-  }
-
-  flatMap<T>(f: (o: AstralObject, row: number, col: number) => Array<T>): Array<T> {
-    return this.map(f).reduce((acc, val) => acc.concat(val))
+    return new MegaverseMap(flatten(objects))
   }
 }
 
@@ -239,22 +208,17 @@ class MegaverseController {
 
   async solve() {
     // solve current state -> goal state
-    const promises = this.mapGoal.flatMap((goal, row, col) => {
-      const curr = this.mapCurrent.get(row, col)
-      const actions = this.generateAction(row, col, curr, goal)
-      return actions.map(action => this.api.set(action))
-    })
+    const promises = flatten(this.mapGoal.map.map((goal, i) => {
+      const curr = this.mapCurrent.map[i]
+      const actions = this.generateAction(curr, goal)
+      return actions.map(action => this.api.makeAction(action))
+    }))
     // chain instead of firing all at once
-    if (promises.length) {
-      await promises.reduce((acc, p) => acc.then(_ => p), Promise.resolve())
-      return false
-    }
-    else {
-      return true
-    }
+    await promises.reduce((acc, p) => acc.then(_ => p), Promise.resolve())
+    return promises.length === 0
   }
 
-  generateAction(row: number, col: number, from: AstralObject, to: AstralObject): Array<MapAction> {
+  generateAction(from: AstralObject, to: AstralObject): Array<MapAction> {
     const actions = Array<MapAction>()
     if (from.type !== "SPACE" && !to.equals(from)) {
       // hack: skip if "ALREADYSET"
