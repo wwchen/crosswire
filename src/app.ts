@@ -3,12 +3,13 @@ import axiosRetry from 'axios-retry';
 
 axiosRetry(axios, { retries: 5, retryDelay: axiosRetry.exponentialDelay })
 axios.interceptors.request.use(request => {
-  console.log('Starting Request', request.url)
+  console.log(`(${request.method} ${request.url} ${JSON.stringify(request.data)}`)
   return request
 })
-
 axios.interceptors.response.use(response => {
-  console.log('Response:', response.status)
+  if (response.status !== 200) {
+    console.log(`(${response.status})${response.config.url} ${JSON.stringify(response.data)}`)
+  }
   return response
 })
 
@@ -16,13 +17,41 @@ axios.interceptors.response.use(response => {
 /// ==============================================================================================================
 
 type AstralObjectType = "POLYANET" | "SPACE" | "COMETH" | "SOLOON"
+class AstralObject {
+  type?: AstralObjectType
+  attributeKey?: string
+  attribute?: string
+  row: number
+  col: number
+  value: string
+  constructor(raw: string | null, row: number, col: number) {
+    this.value = raw ?? "SPACE"
+    this.row = row
+    this.col = col
+    this.parse(this.value)
+  }
+  private parse(raw: string) {
+    // warning: this is done in blind faith
+    const words = raw.split("_")
+    this.type = words[words.length - 1] as AstralObjectType
+    if (words.length > 1) {
+      this.attribute = words[0].toLowerCase()
+      if (["blue", "red", "purple", "white"].some(v => v === this.attribute)) {
+        this.attributeKey = "color"
+      }
+      if (["up", "down", "left", "right"].some(v => v === this.attribute)) {
+        this.attributeKey = "direction"
+      }
+    }
+  }
+  equals(o: AstralObject): boolean {
+    return this.value === o.value && this.row === o.row && this.col === o.col
+  }
+}
 
 interface MapAction {
   actionType: "delete" | "set"
-  objectType: AstralObjectType
-  param?: string
-  row: number
-  col: number
+  object: AstralObject
 }
 
 /// ==============================================================================================================
@@ -39,17 +68,19 @@ interface MegaverseApi {
 
 class MegaverseLocalApi implements MegaverseApi {
   getMap(): Promise<MegaverseMap> {
-    const rawState = [[null, null, null, null, null, null, null, null, null, null, null], [null, null, null, null, null, null, null, null, null, null, null], [null, null, null, null, null, null, null, null, null, null, null], [null, null, null, null, null, null, null, null, null, null, null], [null, null, null, null, null, null, null, null, null, null, null], [null, null, null, null, null, null, null, null, null, null, null], [null, null, null, null, null, null, null, null, null, null, null], [null, null, null, null, null, null, null, null, null, null, null], [null, null, null, null, null, null, null, null, null, null, null], [null, null, null, null, null, null, null, null, null, null, null], [null, null, null, null, null, null, null, null, null, null, null]]
-    const validated: Array<Array<AstralObjectType>> = rawState.map(r => r.map(c => c === null ? "SPACE" : c))
-    return new Promise(r => r(new MegaverseMap(validated)))
+    const rawState = [[{ "type": 2, "direction": "up" }, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null], [null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null], [null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null], [null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null], [null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null], [null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null], [null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null], [null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null], [null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null], [null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null], [null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null], [null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null], [null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null], [null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null], [null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null], [null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null], [null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null], [null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null], [null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null], [null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null], [null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null], [null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null], [null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null], [null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null], [null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null], [null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null], [null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null], [null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null], [null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null], [null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null]]
+    const resetState = rawState.map(r => r.map(c => c ? "ALREADYSET" : c))
+    return Promise.resolve(MegaverseMap.fromRaw(resetState))
   }
   getMapGoal(): Promise<MegaverseMap> {
-    const rawState: Array<Array<AstralObjectType>> = [['SPACE', 'SPACE', 'SPACE', 'SPACE', 'SPACE', 'SPACE', 'SPACE', 'SPACE', 'SPACE', 'SPACE', 'SPACE'], ['SPACE', 'SPACE', 'SPACE', 'SPACE', 'SPACE', 'SPACE', 'SPACE', 'SPACE', 'SPACE', 'SPACE', 'SPACE'], ['SPACE', 'SPACE', 'POLYANET', 'SPACE', 'SPACE', 'SPACE', 'SPACE', 'SPACE', 'POLYANET', 'SPACE', 'SPACE'], ['SPACE', 'SPACE', 'SPACE', 'POLYANET', 'SPACE', 'SPACE', 'SPACE', 'POLYANET', 'SPACE', 'SPACE', 'SPACE'], ['SPACE', 'SPACE', 'SPACE', 'SPACE', 'POLYANET', 'SPACE', 'POLYANET', 'SPACE', 'SPACE', 'SPACE', 'SPACE'], ['SPACE', 'SPACE', 'SPACE', 'SPACE', 'SPACE', 'POLYANET', 'SPACE', 'SPACE', 'SPACE', 'SPACE', 'SPACE'], ['SPACE', 'SPACE', 'SPACE', 'SPACE', 'POLYANET', 'SPACE', 'POLYANET', 'SPACE', 'SPACE', 'SPACE', 'SPACE'], ['SPACE', 'SPACE', 'SPACE', 'POLYANET', 'SPACE', 'SPACE', 'SPACE', 'POLYANET', 'SPACE', 'SPACE', 'SPACE'], ['SPACE', 'SPACE', 'POLYANET', 'SPACE', 'SPACE', 'SPACE', 'SPACE', 'SPACE', 'POLYANET', 'SPACE', 'SPACE'], ['SPACE', 'SPACE', 'SPACE', 'SPACE', 'SPACE', 'SPACE', 'SPACE', 'SPACE', 'SPACE', 'SPACE', 'SPACE'], ['SPACE', 'SPACE', 'SPACE', 'SPACE', 'SPACE', 'SPACE', 'SPACE', 'SPACE', 'SPACE', 'SPACE', 'SPACE']]
-    return new Promise(r => r(new MegaverseMap(rawState)))
+    const rawState: Array<Array<string>> = [["SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE"], ["SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "RIGHT_COMETH", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE"], ["SPACE", "SPACE", "POLYANET", "POLYANET", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "UP_COMETH", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "POLYANET", "POLYANET", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE"], ["SPACE", "SPACE", "POLYANET", "SPACE", "POLYANET", "POLYANET", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "WHITE_SOLOON", "POLYANET", "POLYANET", "SPACE", "POLYANET", "SPACE", "SPACE", "LEFT_COMETH", "SPACE", "SPACE"], ["SPACE", "SPACE", "SPACE", "POLYANET", "SPACE", "BLUE_SOLOON", "POLYANET", "POLYANET", "PURPLE_SOLOON", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "LEFT_COMETH", "SPACE", "SPACE", "POLYANET", "POLYANET", "SPACE", "SPACE", "POLYANET", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "RIGHT_COMETH"], ["SPACE", "SPACE", "SPACE", "POLYANET", "SPACE", "SPACE", "WHITE_SOLOON", "SPACE", "POLYANET", "POLYANET", "SPACE", "SPACE", "DOWN_COMETH", "SPACE", "SPACE", "SPACE", "SPACE", "POLYANET", "POLYANET", "BLUE_SOLOON", "SPACE", "SPACE", "SPACE", "POLYANET", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE"], ["SPACE", "SPACE", "SPACE", "SPACE", "POLYANET", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "POLYANET", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "POLYANET", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "POLYANET", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE"], ["SPACE", "SPACE", "SPACE", "SPACE", "POLYANET", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "POLYANET", "SPACE", "SPACE", "SPACE", "SPACE", "RED_SOLOON", "POLYANET", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "POLYANET", "PURPLE_SOLOON", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE"], ["SPACE", "SPACE", "SPACE", "SPACE", "WHITE_SOLOON", "POLYANET", "SPACE", "SPACE", "SPACE", "SPACE", "BLUE_SOLOON", "POLYANET", "SPACE", "SPACE", "SPACE", "POLYANET", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "POLYANET", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE"], ["SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "POLYANET", "PURPLE_SOLOON", "SPACE", "SPACE", "SPACE", "SPACE", "POLYANET", "RED_SOLOON", "SPACE", "SPACE", "POLYANET", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "POLYANET", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "UP_COMETH", "SPACE", "SPACE"], ["SPACE", "SPACE", "UP_COMETH", "SPACE", "SPACE", "SPACE", "POLYANET", "POLYANET", "SPACE", "SPACE", "SPACE", "SPACE", "POLYANET", "SPACE", "POLYANET", "SPACE", "SPACE", "SPACE", "PURPLE_SOLOON", "POLYANET", "POLYANET", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE"], ["SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "BLUE_SOLOON", "POLYANET", "POLYANET", "SPACE", "SPACE", "POLYANET", "SPACE", "POLYANET", "SPACE", "SPACE", "POLYANET", "POLYANET", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE"], ["SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "POLYANET", "POLYANET", "SPACE", "POLYANET", "SPACE", "POLYANET", "POLYANET", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "LEFT_COMETH", "SPACE", "SPACE", "DOWN_COMETH", "SPACE"], ["SPACE", "SPACE", "SPACE", "SPACE", "RIGHT_COMETH", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "POLYANET", "POLYANET", "POLYANET", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE"], ["SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "WHITE_SOLOON", "POLYANET", "POLYANET", "SPACE", "POLYANET", "SPACE", "POLYANET", "POLYANET", "BLUE_SOLOON", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE"], ["SPACE", "LEFT_COMETH", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "POLYANET", "POLYANET", "SPACE", "SPACE", "POLYANET", "SPACE", "POLYANET", "SPACE", "SPACE", "POLYANET", "POLYANET", "WHITE_SOLOON", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "RIGHT_COMETH", "SPACE", "SPACE", "SPACE"], ["SPACE", "SPACE", "SPACE", "DOWN_COMETH", "SPACE", "SPACE", "POLYANET", "POLYANET", "BLUE_SOLOON", "SPACE", "SPACE", "SPACE", "POLYANET", "SPACE", "POLYANET", "SPACE", "SPACE", "SPACE", "SPACE", "POLYANET", "POLYANET", "BLUE_SOLOON", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE"], ["SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "POLYANET", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "POLYANET", "SPACE", "SPACE", "PURPLE_SOLOON", "POLYANET", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "POLYANET", "SPACE", "SPACE", "UP_COMETH", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE"], ["SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "POLYANET", "PURPLE_SOLOON", "SPACE", "SPACE", "SPACE", "SPACE", "POLYANET", "SPACE", "SPACE", "SPACE", "POLYANET", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "POLYANET", "RED_SOLOON", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE"], ["SPACE", "SPACE", "SPACE", "SPACE", "POLYANET", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "POLYANET", "WHITE_SOLOON", "SPACE", "SPACE", "SPACE", "SPACE", "POLYANET", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "POLYANET", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE"], ["RIGHT_COMETH", "SPACE", "SPACE", "SPACE", "POLYANET", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "POLYANET", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "POLYANET", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "POLYANET", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE"], ["SPACE", "SPACE", "SPACE", "POLYANET", "SPACE", "SPACE", "SPACE", "SPACE", "POLYANET", "POLYANET", "RED_SOLOON", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "WHITE_SOLOON", "POLYANET", "POLYANET", "PURPLE_SOLOON", "SPACE", "SPACE", "SPACE", "POLYANET", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE"], ["SPACE", "SPACE", "SPACE", "POLYANET", "SPACE", "RED_SOLOON", "POLYANET", "POLYANET", "BLUE_SOLOON", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "LEFT_COMETH", "SPACE", "SPACE", "SPACE", "SPACE", "POLYANET", "POLYANET", "SPACE", "SPACE", "POLYANET", "RED_SOLOON", "SPACE", "SPACE", "DOWN_COMETH", "SPACE", "SPACE"], ["SPACE", "SPACE", "POLYANET", "SPACE", "POLYANET", "POLYANET", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "POLYANET", "POLYANET", "SPACE", "POLYANET", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE"], ["SPACE", "SPACE", "POLYANET", "POLYANET", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "UP_COMETH", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "POLYANET", "POLYANET", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE"], ["SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE"], ["SPACE", "SPACE", "SPACE", "DOWN_COMETH", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "DOWN_COMETH", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "UP_COMETH", "SPACE", "SPACE", "SPACE"], ["SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "LEFT_COMETH", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE"], ["SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "RIGHT_COMETH", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "LEFT_COMETH", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE"], ["SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE", "SPACE"]]
+    return Promise.resolve(MegaverseMap.fromRaw(rawState))
   }
   set(action: MapAction): Promise<void> {
-    console.log(`${action.actionType} (${action.row}, ${action.col}) to ${action.objectType}`)
-    return new Promise(r => r())
+    const obj = action.object
+    const attr = obj.attributeKey ? `(${obj.attributeKey}=${obj.attribute})` : ""
+    console.log(`${action.actionType} (${obj.row}, ${obj.col}) to ${obj.type} ${attr}`)
+    return Promise.resolve()
   }
 }
 
@@ -71,10 +102,16 @@ abstract class RestApiConfig {
   }
 }
 
+type MapContent = {
+  type: number,
+  direction?: string,
+  color?: string
+}
+
 type MapResponse = {
   map: {
     _id: string,
-    content: Array<Array<AstralObjectType>>,
+    content: Array<Array<MapContent | null>>,
     candidateId: string,
     phase: number,
     __v: number,
@@ -100,27 +137,33 @@ class MegaverseRestApi extends RestApiConfig implements MegaverseApi {
   async getMap() {
     const response = await axios.get<MapResponse>(this.endpoints.map)
     const rawState = response.data.map.content
-    const validated: Array<Array<AstralObjectType>> = rawState.map(r => r.map(c => c === null ? "SPACE" : c))
-    return new MegaverseMap(validated)
+    const resetState = rawState.map(r => r.map(c => c ? "ALREADYSET" : c))
+    return MegaverseMap.fromRaw(resetState)
   }
   async getMapGoal() {
     const response = await axios.get<GoalResponse>(this.endpoints.mapGoal)
-    return new MegaverseMap(response.data.goal)
+    const rawState = response.data.goal
+    return MegaverseMap.fromRaw(rawState)
   }
   async set(action: MapAction): Promise<void> {
-    const endpoint = this.astralObjectEndpoint(action.objectType)
+    const obj = action.object
+    if (!obj.type) { return Promise.resolve() }
+    const endpoint = this.astralObjectEndpoint(obj.type)
     const axiosOp = function () {
       switch (action.actionType) {
-        case "delete": return axios.post
+        case "delete": return axios.delete
         case "set": return axios.post
       }
     }()
+    const attr = obj.attributeKey ? { [obj.attributeKey]: obj.attribute } : {}
     await axiosOp<AstralObjectSetResponse>(endpoint, {
-      row: action.row,
-      column: action.col,
-      candidateId: this.candidateId
-    }).catch(err => console.error(err))
+      ...attr,
+      row: obj.row,
+      column: obj.col,
+      candidateId: this.candidateId,
+    }).then(r => console.log(r.status)).catch(err => console.error(err))
   }
+
 }
 
 /// ==============================================================================================================
@@ -130,17 +173,22 @@ class MegaverseMap {
   rows: number
   cols: number
   length: number
-  _map: Array<Array<AstralObjectType>>
-  constructor(rawState: Array<Array<AstralObjectType>>) {
-    this.rows = rawState.length
-    this.cols = rawState[0].length
+  _map: Array<Array<AstralObject>>
+  constructor(objects: Array<Array<AstralObject>>) {
+    this.rows = objects.length
+    this.cols = objects[0].length
     this.length = this.rows * this.cols
-    this._map = rawState
+    this._map = objects // todo flatten it
   }
 
-  get(row: number, col: number): AstralObjectType { return this._map[row][col] }
+  static fromRaw(raw: Array<Array<string | null>>): MegaverseMap {
+    const objects = raw.map((r, ri) => r.map((c, ci) => new AstralObject(c, ri, ci)))
+    return new MegaverseMap(objects)
+  }
 
-  *iterator(): Generator<AstralObjectType> {
+  get(row: number, col: number): AstralObject { return this._map[row][col] }
+
+  *iterator(): Generator<AstralObject> {
     for (const row of this._map) {
       for (const cell of row) {
         yield cell
@@ -148,7 +196,7 @@ class MegaverseMap {
     }
   }
 
-  map<T>(f: (o: AstralObjectType, row: number, col: number) => T): Array<T> {
+  map<T>(f: (o: AstralObject, row: number, col: number) => T): Array<T> {
     const i = this.iterator()
     let curr = i.next()
     let count = 0
@@ -164,11 +212,10 @@ class MegaverseMap {
     return collection
   }
 
-  flatMap<T>(f: (o: AstralObjectType, row: number, col: number) => Array<T>): Array<T> {
+  flatMap<T>(f: (o: AstralObject, row: number, col: number) => Array<T>): Array<T> {
     return this.map(f).reduce((acc, val) => acc.concat(val))
   }
 }
-
 
 class MegaverseController {
   api: MegaverseApi
@@ -179,7 +226,7 @@ class MegaverseController {
   }
 
   static async init() {
-    const instance = new MegaverseController(new MegaverseRestApi)
+    const instance = new MegaverseController(new MegaverseLocalApi())
     await instance._init()
     return instance
   }
@@ -192,22 +239,40 @@ class MegaverseController {
 
   async solve() {
     // solve current state -> goal state
-    await this.mapGoal.flatMap((goal, row, col) => {
+    const promises = this.mapGoal.flatMap((goal, row, col) => {
       const curr = this.mapCurrent.get(row, col)
       const actions = this.generateAction(row, col, curr, goal)
       return actions.map(action => this.api.set(action))
     })
+    // chain instead of firing all at once
+    if (promises.length) {
+      await promises.reduce((acc, p) => acc.then(_ => p), Promise.resolve())
+      return false
+    }
+    else {
+      return true
+    }
   }
 
-  generateAction(row: number, col: number, from: AstralObjectType, to: AstralObjectType): Array<MapAction> {
+  generateAction(row: number, col: number, from: AstralObject, to: AstralObject): Array<MapAction> {
     const actions = Array<MapAction>()
-    if (to !== "SPACE") {
-      actions.push({
-        actionType: "set",
-        objectType: to,
-        row: row,
-        col: col
-      })
+    if (from.type !== "SPACE" && !to.equals(from)) {
+      // hack: skip if "ALREADYSET"
+      if (from.type?.toString() !== "ALREADYSET") {
+        actions.push({
+          actionType: "delete",
+          object: from
+        })
+      }
+    }
+    if (to.type !== "SPACE") {
+      // hack: skip if "ALREADYSET"
+      if (from.type?.toString() !== "ALREADYSET") {
+        actions.push({
+          actionType: "set",
+          object: to
+        })
+      }
     }
     return actions
   }
@@ -216,6 +281,14 @@ class MegaverseController {
 /// ==============================================================================================================
 
 console.log("----- Start -----")
+function delay(ms: number) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
 const controller = await MegaverseController.init()
-controller.solve()
+// keep running until there's no more diffs
+let result = await controller.solve()
+while (!result) {
+  result = await controller.solve()
+  await delay(1000)
+}
 console.log("-----  End  -----")
